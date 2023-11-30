@@ -1,9 +1,13 @@
-#include <Arduino.h>
+#include <FalconLoRa.h>
+
+#define RADIO_DRIVER_VERSION "0.1"
 
 #define COMMAND_BUFFER_SIZE 8
 #define DATA_BUFFER_SIZE 256
 
-char cmd[COMMAND_BUFFER_SIZE], data[DATA_BUFFER_SIZE];
+falcon::lora_rx lora;
+
+char cmd[COMMAND_BUFFER_SIZE], data[DATA_BUFFER_SIZE], packet[FALCON_MAX_DATA_LEN];
 int data_len;
 
 int freq = 868, spread = 69, bandwidth = 100, power = 23;
@@ -14,66 +18,100 @@ int set_config() {
     Serial.readBytesUntil('\n', data, DATA_BUFFER_SIZE);
     if (strcmp(cmd, "FREQ") == 0) {
         freq = val;
+        lora.set_frequency(freq);
 
-        Serial.print("set freq to");
-        Serial.println(val);
+            Serial.println("OK");
+
+        return 0;
     }
 
     if (strcmp(cmd, "BWIDTH") == 0) {
         bandwidth = val;
+        lora.set_bandwidth(bandwidth);
 
-        Serial.print("set bandwidth to");
-        Serial.println(val);
+            Serial.println("OK");
+
+        return 0;
     }
 
     if (strcmp(cmd, "SPREAD") == 0) {
         spread = val;
+        lora.set_spread(spread);
 
-        Serial.print("set spread to");
-        Serial.println(val);
+            Serial.println("OK");
+
+        return 0;
     }
 
     if (strcmp(cmd, "POWER") == 0) {
         power = val;
+        lora.set_power(power);
 
-        Serial.print("set tx power to");
-        Serial.println(val);
+            Serial.println("OK");
+
+        return 0;
     }
 
+        Serial.println("ERROR");
 
-    return 0;
+    return -1;
 }
 
 int get_config() {
     Serial.readBytesUntil('\n', data, DATA_BUFFER_SIZE);
+
+    if (strcmp(cmd, "REV") == 0) {
+        Serial.println(RADIO_DRIVER_VERSION);
+    }
+
     if (strcmp(cmd, "FREQ") == 0) {
-        Serial.print("freq is");
-        Serial.println(freq);
+            
+            Serial.println(freq);
+        
+        return 0;
     }
 
     if (strcmp(cmd, "BWIDTH") == 0) {
-        Serial.print("bandwidth is");
-        Serial.println(bandwidth);
+            
+            Serial.println(bandwidth);
+        
+        return 0;
     }
 
     if (strcmp(cmd, "SPREAD") == 0) {
-        Serial.print("spread is");
-        Serial.println(spread);
+            
+            Serial.println(spread);
+
+        return 0;
     }
 
     if (strcmp(cmd, "POWER") == 0) {
-        Serial.print("tx power is");
-        Serial.println(power);
+        
+            Serial.println(power);
+
+        return 0;
     }
 
-    return 0;
+        Serial.println("ERROR");
+
+    return -1;
 }
 
 int parse_packet() {
     Serial.readBytesUntil('\n', data, DATA_BUFFER_SIZE);
-    if (strcmp(cmd, "PACKET") == 0) Serial.println(data);
+    if (strcmp(cmd, "PACKET") == 0) {
+        if (lora.send(cmd) == FALCON_OK) {
+            
+                Serial.println("OK");
+            
+            return 0;
+        } else {
+                
+                Serial.println("ERROR");
 
-    return 0;
+            return -1;
+        }
+    }
 };
 
 
@@ -97,14 +135,21 @@ int handle_command() {
     return -1;
 };
 
+void forward_packets() {
+    memset(packet, 0, FALCON_MAX_DATA_LEN);
+
+    if (lora.recv(packet) == FALCON_OK) {
+        Serial.println(packet);
+    }
+}
+
 void setup() {
     Serial.begin(9600);
     Serial.setTimeout(100);
 }
 
 void loop() {
-    if (Serial.available() == 0) return;
-
-    handle_command();
-    // forward_packets();
+    forward_packets();
+    if (Serial.available() > 0) handle_command();
+    delay(10);
 }
