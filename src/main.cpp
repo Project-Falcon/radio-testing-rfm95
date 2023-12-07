@@ -154,7 +154,7 @@ int handle_command() {
         case '?':  return get_config();
         case '+': return parse_packet();
         default: 
-            Serial.readBytesUntil('=', cmd, COMMAND_BUFFER_SIZE);
+            Serial.readBytesUntil('\n', data, COMMAND_BUFFER_SIZE);
             Serial.println("ERROR");
     }
 
