@@ -7,12 +7,13 @@
 
 using namespace falcon;
 
-lora_tx lora;
+lora_rx lora;
 
 char cmd[COMMAND_BUFFER_SIZE], data[DATA_BUFFER_SIZE], packet[FALCON_MAX_DATA_LEN];
 int data_len;
 
-int freq = 868, spread = 125000, bandwidth = 100, power = 20, rate = 5;
+int freq = 868, bandwidth = 100, power = 20, rate = 5;
+long spread = 125000;
 
 int set_config() {
     float val = Serial.parseFloat();
